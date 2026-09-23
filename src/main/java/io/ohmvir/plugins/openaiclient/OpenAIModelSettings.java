@@ -132,17 +132,16 @@ public class OpenAIModelSettings extends ModelConfiguration {
                         .timeout(Duration.ofSeconds(10))
                         .build();
 
-                for (com.openai.models.models.Model modelInfo : client.models().list().data()) {
+                for (com.openai.models.models.Model modelInfo :
+                        client.models().list().data()) {
                     String id = modelInfo.id();
                     if (id != null && !id.isBlank()) {
                         models.add(id, id);
                     }
                 }
             } catch (Exception e) {
-                LOGGER.log(
-                        Level.WARNING, "Failed to retrieve available models from OpenAI API: " + e.getMessage(), e);
-                models.add(
-                        new ListBoxModel.Option("Error retrieving models from OpenAI: " + e.getMessage(), "", true));
+                LOGGER.log(Level.WARNING, "Failed to retrieve available models from OpenAI API: " + e.getMessage(), e);
+                models.add(new ListBoxModel.Option("Error retrieving models from OpenAI: " + e.getMessage(), "", true));
             }
 
             return models;

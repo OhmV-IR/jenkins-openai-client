@@ -30,7 +30,8 @@ public class OpenAIClientTest {
         assertEquals("https://api.openai.com/v1", OpenAIModelSettings.sanitizeUrl(null));
         assertEquals("https://api.openai.com/v1", OpenAIModelSettings.sanitizeUrl(""));
         assertEquals("https://api.openai.com/v1", OpenAIModelSettings.sanitizeUrl("https://api.openai.com/v1/"));
-        assertEquals("https://custom.gateway.com/v1", OpenAIModelSettings.sanitizeUrl("https://custom.gateway.com/v1///"));
+        assertEquals(
+                "https://custom.gateway.com/v1", OpenAIModelSettings.sanitizeUrl("https://custom.gateway.com/v1///"));
     }
 
     @Test
@@ -50,10 +51,18 @@ public class OpenAIClientTest {
 
     @Test
     public void testModelSettingsConstructorValidation() {
-        assertThrows(Descriptor.FormException.class, () -> new OpenAIModelSettings("", "valid-id", "https://api.openai.com/v1"));
-        assertThrows(Descriptor.FormException.class, () -> new OpenAIModelSettings("gpt-4o-mini", "", "https://api.openai.com/v1"));
-        assertThrows(Descriptor.FormException.class, () -> new OpenAIModelSettings("gpt-4o-mini", null, "https://api.openai.com/v1"));
-        assertThrows(Descriptor.FormException.class, () -> new OpenAIModelSettings("gpt-4o-mini", "valid-id", "ftp://api.openai.com"));
+        assertThrows(
+                Descriptor.FormException.class,
+                () -> new OpenAIModelSettings("", "valid-id", "https://api.openai.com/v1"));
+        assertThrows(
+                Descriptor.FormException.class,
+                () -> new OpenAIModelSettings("gpt-4o-mini", "", "https://api.openai.com/v1"));
+        assertThrows(
+                Descriptor.FormException.class,
+                () -> new OpenAIModelSettings("gpt-4o-mini", null, "https://api.openai.com/v1"));
+        assertThrows(
+                Descriptor.FormException.class,
+                () -> new OpenAIModelSettings("gpt-4o-mini", "valid-id", "ftp://api.openai.com"));
     }
 
     @Test

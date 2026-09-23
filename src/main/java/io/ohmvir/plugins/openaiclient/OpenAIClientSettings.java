@@ -18,8 +18,7 @@ public class OpenAIClientSettings extends ModelClientConfiguration {
     }
 
     @DataBoundConstructor
-    public OpenAIClientSettings(long timeoutSeconds, long defaultMaxTokens)
-            throws FormException {
+    public OpenAIClientSettings(long timeoutSeconds, long defaultMaxTokens) throws FormException {
         super(timeoutSeconds);
         if (defaultMaxTokens <= 0) {
             throw new FormException("Default max tokens must be greater than zero", "defaultMaxTokens");

@@ -28,8 +28,11 @@ public class OpenAIModelDataRetriever extends ModelDataRetriever<OpenAIModelSett
             throw new IOException("Model name is required for model configuration: " + configuration.getModelId());
         }
 
-        var client = OpenAIOkHttpClient.builder().apiKey(apiKey).baseUrl(configuration.getApiBaseUrl())
-                .timeout(Duration.ofSeconds(15)).build();
+        var client = OpenAIOkHttpClient.builder()
+                .apiKey(apiKey)
+                .baseUrl(configuration.getApiBaseUrl())
+                .timeout(Duration.ofSeconds(15))
+                .build();
         try {
             var model = client.models().retrieve(modelName);
             ModelData data = new ModelData(configuration);
@@ -61,8 +64,8 @@ public class OpenAIModelDataRetriever extends ModelDataRetriever<OpenAIModelSett
             data.setMaxTemperature(2.0d);
             return data;
         } catch (Exception e) {
-            throw new IOException("Failed to retrieve model info for '" + modelName + "' from OpenAI API: "
-                    + e.getMessage(), e);
+            throw new IOException(
+                    "Failed to retrieve model info for '" + modelName + "' from OpenAI API: " + e.getMessage(), e);
         } finally {
             client.close();
         }
