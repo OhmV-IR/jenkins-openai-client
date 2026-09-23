@@ -50,9 +50,9 @@ pipeline {
                         steps {
                             sh """
                                 mkdir -p output
-                                cp target/ollamaclient.hpi output/ollamaclient-jvm-${JDK_VERSION}.hpi
+                                cp target/openaiclient.hpi output/openaiclient-jvm-${JDK_VERSION}.hpi
                             """
-                            archiveArtifacts artifacts: "output/ollamaclient-jvm-${JDK_VERSION}.hpi",
+                            archiveArtifacts artifacts: "output/openaiclient-jvm-${JDK_VERSION}.hpi",
                                              fingerprint: true
                             sh 'rm -rf output'
                         }
