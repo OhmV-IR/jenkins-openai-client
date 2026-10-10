@@ -105,12 +105,17 @@ public class OpenAIModelSettings extends ModelConfiguration {
             return "OpenAI Model";
         }
 
+        // POST plus an admin check, otherwise anyone could send a stored API key to an arbitrary apiBaseUrl
+        @POST
         public ListBoxModel doFillModelNameItems(
                 @QueryParameter String apiKeyCredentialsId, @QueryParameter String apiBaseUrl) {
             ListBoxModel models = new ListBoxModel();
             if (apiKeyCredentialsId == null || apiKeyCredentialsId.isBlank()) {
                 models.add(new ListBoxModel.Option(
                         "Please select a valid API Key credential to populate models", "", true));
+                return models;
+            }
+            if (Jenkins.getInstanceOrNull() != null && !Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
                 return models;
             }
 
@@ -125,8 +130,9 @@ public class OpenAIModelSettings extends ModelConfiguration {
                 return models;
             }
 
+            com.openai.client.OpenAIClient client = null;
             try {
-                com.openai.client.OpenAIClient client = com.openai.client.okhttp.OpenAIOkHttpClient.builder()
+                client = com.openai.client.okhttp.OpenAIOkHttpClient.builder()
                         .apiKey(secretKey)
                         .baseUrl(baseUrl)
                         .timeout(Duration.ofSeconds(10))
@@ -142,6 +148,8 @@ public class OpenAIModelSettings extends ModelConfiguration {
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "Failed to retrieve available models from OpenAI API: " + e.getMessage(), e);
                 models.add(new ListBoxModel.Option("Error retrieving models from OpenAI: " + e.getMessage(), "", true));
+            } finally {
+                if (client != null) client.close();
             }
 
             return models;
@@ -172,6 +180,9 @@ public class OpenAIModelSettings extends ModelConfiguration {
         public FormValidation doCheckApiKeyCredentialsId(@QueryParameter String value) {
             if (value == null || value.trim().isEmpty()) {
                 return FormValidation.error("API Key Credential is required");
+            }
+            if (Jenkins.getInstanceOrNull() != null && !Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+                return FormValidation.ok();
             }
             if (Jenkins.getInstanceOrNull() != null && SecretsUtils.getSecretText(value, null) == null) {
                 return FormValidation.error(

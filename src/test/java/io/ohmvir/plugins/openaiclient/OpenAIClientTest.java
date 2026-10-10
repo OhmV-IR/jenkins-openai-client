@@ -5,7 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import io.ohmvir.plugins.jenkinsaisynapse.api.models.ModelThinkingLevel;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class OpenAIClientTest {
@@ -71,6 +74,65 @@ public class OpenAIClientTest {
         ListBoxModel items = desc.doFillModelNameItems("", "");
         assertEquals(1, items.size());
         assertTrue(items.get(0).name.contains("Please select a valid API Key credential"));
+    }
+
+    @Test
+    public void testReasoningModelDetection() {
+        for (String name : List.of(
+                "o1",
+                "o3-mini",
+                "o4-mini-2025-04-16",
+                "gpt-5",
+                "gpt-5.1",
+                "GPT-5-mini",
+                "codex-mini-latest",
+                "openai/o3")) {
+            assertTrue(OpenAIModelDataRetriever.isReasoningModel(name), name);
+        }
+        for (String name : List.of(
+                "gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-3.5-turbo", "gpt-5-chat-latest", "omni-moderation-latest")) {
+            assertFalse(OpenAIModelDataRetriever.isReasoningModel(name), name);
+        }
+    }
+
+    @Test
+    public void testReasoningEffortMapping() {
+        assertEquals("low", OpenAIClient.reasoningEffort(ModelThinkingLevel.OFF));
+        assertEquals("low", OpenAIClient.reasoningEffort(ModelThinkingLevel.LOW));
+        assertEquals("medium", OpenAIClient.reasoningEffort(ModelThinkingLevel.MEDIUM));
+        assertEquals("high", OpenAIClient.reasoningEffort(ModelThinkingLevel.HIGH));
+        assertEquals("high", OpenAIClient.reasoningEffort(ModelThinkingLevel.EXTRA_HIGH));
+        assertEquals("high", OpenAIClient.reasoningEffort(ModelThinkingLevel.MAX));
+        assertNull(OpenAIClient.reasoningEffort(ModelThinkingLevel.ON), "ON uses the model's default effort");
+        assertNull(OpenAIClient.reasoningEffort(null));
+    }
+
+    @Test
+    public void testTimeoutResolution() throws Descriptor.FormException {
+        assertEquals(Duration.ofSeconds(120), OpenAIClient.timeout(null));
+        assertEquals(Duration.ofSeconds(45), OpenAIClient.timeout(new OpenAIClientSettings(45L, 1L)));
+        assertEquals(Duration.ZERO, OpenAIClient.timeout(new OpenAIClientSettings(0L, 1L)));
+        OpenAIClientSettings unset = new OpenAIClientSettings();
+        unset.setTimeoutSeconds(null);
+        assertEquals(Duration.ofSeconds(120), OpenAIClient.timeout(unset));
+    }
+
+    @Test
+    public void testClientSettingsRejectNegativeTimeout() {
+        assertThrows(Descriptor.FormException.class, () -> new OpenAIClientSettings(-1L, 4096L));
+        assertThrows(Descriptor.FormException.class, () -> new OpenAIClientSettings(60L, -5L));
+    }
+
+    @Test
+    public void testModelSettingsTrimAndDefaults() throws Descriptor.FormException {
+        OpenAIModelSettings settings = new OpenAIModelSettings("  gpt-4o  ", "id", "  https://gw.example.com/v1/ ");
+        assertEquals("gpt-4o", settings.getModelName());
+        assertEquals("openai:gpt-4o", settings.getModelId());
+        assertEquals("https://gw.example.com/v1", settings.getApiBaseUrl());
+        assertEquals(
+                OpenAIModelSettings.DEFAULT_API_BASE_URL, new OpenAIModelSettings("gpt-4o", "id", " ").getApiBaseUrl());
+        assertEquals(OpenAIModelSettings.DEFAULT_API_BASE_URL, new OpenAIModelSettings("gpt-4o", "id").getApiBaseUrl());
+        assertEquals("openai", settings.getProviderType());
     }
 
     @Test
